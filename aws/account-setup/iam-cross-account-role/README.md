@@ -7,7 +7,7 @@ This Terraform module creates an AWS IAM role that can be assumed by the `skylif
 
 - Creates an IAM role that can be assumed by the `skylift.dev` service account role.
 - `skylift.dev` will pass the unique Account ID as the ExternalID when assuming the role for added security
-- Grants read-only permissions for IAM operations:
+- Grants permissions for IAM operations:
   - List and get IAM groups
   - Get IAM users
   - List groups for users
