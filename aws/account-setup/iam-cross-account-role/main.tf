@@ -73,13 +73,13 @@ resource "aws_iam_policy" "this" {
   name        = var.policy_name
   path        = var.policy_path
   description = "Policy allowing read-only IAM operations for groups and users"
-  policy      = data.aws_iam_policy_document.iam_readonly.json
+  policy      = data.aws_iam_policy_document.iam_permissions.json
 
   tags = var.tags
 }
 
 # IAM Policy Document for Group and User Operations
-data "aws_iam_policy_document" "iam_readonly" {
+data "aws_iam_policy_document" "iam_permissions" {
   statement {
     effect = "Allow"
 
