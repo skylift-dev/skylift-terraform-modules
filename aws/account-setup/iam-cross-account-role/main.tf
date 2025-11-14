@@ -1,20 +1,20 @@
-# IAM Role for Cross-Account Access with ExternalID
-resource "aws_iam_role" "cross_account_role" {
+resource "aws_iam_role" "this" {
   name               = var.role_name
+  path               = var.role_path
   description        = var.role_description
-  assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
 
   tags = var.tags
 }
 
 # Assume Role Policy Document
-data "aws_iam_policy_document" "assume_role_policy" {
+data "aws_iam_policy_document" "assume_role" {
   statement {
     effect = "Allow"
 
     principals {
       type        = "AWS"
-      identifiers = [var.trusted_role_arn]
+      identifiers = [var.skylift_account_reader_iam_role_arn]
     }
 
     actions = ["sts:AssumeRole"]
@@ -22,22 +22,23 @@ data "aws_iam_policy_document" "assume_role_policy" {
     condition {
       test     = "StringEquals"
       variable = "sts:ExternalId"
-      values   = [var.external_id]
+      values   = [var.skylift_account_external_id]
     }
   }
 }
 
 # IAM Policy for Group and User Operations
-resource "aws_iam_policy" "iam_readonly_policy" {
+resource "aws_iam_policy" "this" {
   name        = var.policy_name
+  path        = var.policy_path
   description = "Policy allowing read-only IAM operations for groups and users"
-  policy      = data.aws_iam_policy_document.iam_readonly_policy.json
+  policy      = data.aws_iam_policy_document.iam_readonly.json
 
   tags = var.tags
 }
 
 # IAM Policy Document for Group and User Operations
-data "aws_iam_policy_document" "iam_readonly_policy" {
+data "aws_iam_policy_document" "iam_readonly" {
   statement {
     effect = "Allow"
 
@@ -53,7 +54,7 @@ data "aws_iam_policy_document" "iam_readonly_policy" {
 }
 
 # Attach the policy to the role
-resource "aws_iam_role_policy_attachment" "attach_policy" {
-  role       = aws_iam_role.cross_account_role.name
-  policy_arn = aws_iam_policy.iam_readonly_policy.arn
+resource "aws_iam_role_policy_attachment" "this" {
+  role       = aws_iam_role.this.name
+  policy_arn = aws_iam_policy.this.arn
 }
