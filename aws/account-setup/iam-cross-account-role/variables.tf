@@ -12,7 +12,7 @@ variable "role_name" {
 variable "role_description" {
   description = "Description of the IAM role"
   type        = string
-  default     = "Cross-account IAM role with read-only access to IAM groups and users"
+  default     = "Cross-account IAM role with access to IAM groups and users"
 }
 
 variable "policy_path" {
