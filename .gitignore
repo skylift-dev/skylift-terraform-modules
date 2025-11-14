@@ -35,3 +35,6 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Ignore lock files since users will want to pin their own versions of modules and providers
+.terraform.lock.hcl

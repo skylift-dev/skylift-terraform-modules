@@ -1,28 +1,30 @@
-# IAM Cross-Account Role Module
+<!-- BEGIN_TF_DOCS -->
+# `skylift.dev` AWS Account Setup Module
 
-This Terraform module creates an AWS IAM role that can be assumed from another AWS account using cross-account access with an ExternalID for enhanced security. The role is granted read-only permissions for IAM groups and users operations.
+This Terraform module creates an AWS IAM role that can be assumed by the `skylift.dev` AWS Account Reader role which synchronizes AWS IAM groups and IAM user memberships
 
 ## Features
 
-- Creates an IAM role with cross-account assume role capability
-- Implements ExternalID validation to prevent confused deputy attacks
+- Creates an IAM role that can be assumed by the `skylift.dev` service account role.
+- `skylift.dev` will pass the unique Account ID as the ExternalID when assuming the role for added security
 - Grants read-only permissions for IAM operations:
   - List and get IAM groups
   - Get IAM users
   - List groups for users
-- Configurable role and policy names
-- Support for custom tags
+  - Add a user to a group
+  - Remove a user from a group
 
 ## Usage
 
 ```hcl
-module "cross_account_iam_role" {
+module "skylift_account_role" {
   source = "./aws/account-setup/iam-cross-account-role"
 
-  role_name        = "CrossAccountIAMReadRole"
-  policy_name      = "CrossAccountIAMReadPolicy"
+  role_name        = "SkyliftServiceAccount"
+  policy_name      = "SkyliftPermissions"
+  # The actual `skylift.dev` AWS IAM Role ARN is available in the docs
   trusted_role_arn = "arn:aws:iam::123456789012:role/TrustedRole"
-  external_id      = "unique-external-id-string"
+  external_id      = "<your Skylift AWS Account ID>"
 
   tags = {
     Environment = "production"
@@ -31,94 +33,56 @@ module "cross_account_iam_role" {
 }
 ```
 
-## Example: Assuming the Role from Another Account
+## License
 
-Once the role is created, you can assume it from the trusted account:
-
-```bash
-aws sts assume-role \
-  --role-arn arn:aws:iam::TARGET_ACCOUNT_ID:role/CrossAccountIAMReadRole \
-  --role-session-name my-session \
-  --external-id unique-external-id-string
-```
-
-Or in Terraform:
-
-```hcl
-data "aws_caller_identity" "current" {}
-
-provider "aws" {
-  alias = "target_account"
-
-  assume_role {
-    role_arn     = module.cross_account_iam_role.role_arn
-    external_id  = var.external_id
-    session_name = "terraform-session"
-  }
-}
-```
+This module is provided as-is for use with skylift.dev infrastructure.
 
 ## Requirements
 
 | Name | Version |
 |------|---------|
-| terraform | >= 1.0 |
-| aws | >= 4.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.0 |
+
+## Providers
+
+| Name | Version |
+|------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.21.0 |
+
+## Modules
+
+No modules.
+
+## Resources
+
+| Name | Type |
+|------|------|
+| [aws_iam_policy.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_role.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy_attachment.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_policy_document.assume_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.iam_readonly](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| role_name | Name of the IAM role to create | `string` | n/a | yes |
-| policy_name | Name of the IAM policy to create | `string` | n/a | yes |
-| trusted_role_arn | ARN of the IAM role in the trusted account that can assume this role | `string` | n/a | yes |
-| external_id | External ID for assuming the role (used to prevent confused deputy problem) | `string` | n/a | yes |
-| role_description | Description of the IAM role | `string` | `"Cross-account IAM role with read-only access to IAM groups and users"` | no |
-| tags | Tags to apply to the IAM role and policy | `map(string)` | `{}` | no |
+| <a name="input_policy_name"></a> [policy\_name](#input\_policy\_name) | Name of the IAM policy to create | `string` | n/a | yes |
+| <a name="input_policy_path"></a> [policy\_path](#input\_policy\_path) | Path of the IAM policy to create | `string` | `"/"` | no |
+| <a name="input_role_description"></a> [role\_description](#input\_role\_description) | Description of the IAM role | `string` | `"Cross-account IAM role with read-only access to IAM groups and users"` | no |
+| <a name="input_role_name"></a> [role\_name](#input\_role\_name) | Name of the IAM role to create | `string` | n/a | yes |
+| <a name="input_role_path"></a> [role\_path](#input\_role\_path) | Path of the IAM role to create | `string` | `"/"` | no |
+| <a name="input_skylift_account_external_id"></a> [skylift\_account\_external\_id](#input\_skylift\_account\_external\_id) | External ID for assuming the role (used to prevent confused deputy problem) | `string` | n/a | yes |
+| <a name="input_skylift_account_reader_iam_role_arn"></a> [skylift\_account\_reader\_iam\_role\_arn](#input\_skylift\_account\_reader\_iam\_role\_arn) | ARN of the IAM role in the trusted account that can assume this role | `string` | n/a | yes |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to the IAM role and policy | `map(string)` | `{}` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| role_arn | ARN of the created IAM role |
-| role_name | Name of the created IAM role |
-| role_id | ID of the created IAM role |
-| policy_arn | ARN of the created IAM policy |
-| policy_name | Name of the created IAM policy |
-
-## IAM Permissions Granted
-
-This module grants the following IAM permissions to the role:
-
-- `iam:GetGroup` - Retrieve information about a specific IAM group
-- `iam:ListGroups` - List all IAM groups in the account
-- `iam:GetUser` - Retrieve information about a specific IAM user
-- `iam:ListGroupsForUser` - List all groups that a user belongs to
-
-## Security Considerations
-
-### ExternalID
-
-This module requires an `external_id` parameter which helps prevent the "confused deputy" problem in cross-account access scenarios. The ExternalID must be:
-- Between 2 and 1224 characters long
-- Unique and secret (treat it like a password)
-- Shared only between the accounts that need access
-
-### Trusted Role ARN
-
-The `trusted_role_arn` parameter specifies which IAM role from another account is allowed to assume this role. Make sure to:
-- Use the most specific role ARN possible (avoid using account-level principals)
-- Validate the ARN format (the module includes validation)
-- Regularly review and audit which roles have access
-
-## Best Practices
-
-1. **Generate secure ExternalIDs**: Use a cryptographically secure random string generator
-2. **Store ExternalIDs securely**: Use AWS Secrets Manager or similar secret management service
-3. **Implement least privilege**: This module grants read-only IAM permissions; avoid adding unnecessary permissions
-4. **Use tags**: Apply appropriate tags for cost tracking and resource management
-5. **Monitor usage**: Enable CloudTrail logging to monitor assume role operations
-
-## License
-
-This module is provided as-is for use with skylift.dev infrastructure.
+| <a name="output_policy_arn"></a> [policy\_arn](#output\_policy\_arn) | ARN of the created IAM policy |
+| <a name="output_policy_name"></a> [policy\_name](#output\_policy\_name) | Name of the created IAM policy |
+| <a name="output_role_arn"></a> [role\_arn](#output\_role\_arn) | ARN of the created IAM role |
+| <a name="output_role_name"></a> [role\_name](#output\_role\_name) | Name of the created IAM role |
+<!-- END_TF_DOCS -->
