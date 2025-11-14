@@ -44,16 +44,6 @@ This module is provided as-is for use with skylift.dev infrastructure.
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 6.0 |
 
-## Providers
-
-| Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.21.0 |
-
-## Modules
-
-No modules.
-
 ## Resources
 
 | Name | Type |
